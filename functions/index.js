@@ -98,6 +98,46 @@ exports.addPatient = functions.https.onRequest((req, res) => {
   });
 });
 
+exports.getPatients = functions.https.onRequest((req, res) => {
+  return cors(req, res, () => {
+    if (req.method !== "GET") {
+      return res.status(404).json({
+        message: "Not allowed"
+      });
+    }
+
+    let patients = [];
+
+    const doctorId = req.query.id;
+    console.log("doctor id:", doctorId);
+
+    return patientDB.on(
+      "value",
+      snapshot => {
+        snapshot.forEach(patient => {
+          console.log("p", patient.val());
+          if (patient.val().doctorId === doctorId) {
+            patients.push({
+              id: patient.key,
+              age: patient.val().age,
+              doctorId: patient.val().doctorId,
+              medicalHistory: patient.val().medicalHistory,
+              patientName: patient.val().patientName
+            });
+          }
+        });
+
+        res.status(200).json(patients);
+      },
+      error => {
+        res.status(error.code).json({
+          message: `Something went wrong. ${error.message}`
+        });
+      }
+    );
+  });
+});
+
 exports.signUp = functions.https.onRequest((req, res) => {
   return cors(req, res, () => {
     if (req.method !== "POST") {
