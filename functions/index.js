@@ -192,6 +192,82 @@ exports.getPatientDetails = functions.https.onRequest((req, res) => {
   });
 });
 
+exports.addPatientRecord = functions.https.onRequest((req, res) => {
+  return cors(req, res, () => {
+    if (req.method !== "POST") {
+      return res.status(401).json({
+        message: "Not allowed"
+      });
+    }
+    let { disease, medications, description, date } = req.body;
+    let newRecord = { disease, medications, description, date };
+
+    const id = req.query.id;
+    const updateHistory = admin.database().ref(`/patients/${id}`);
+    const a = updateHistory.child("/medicalHistory");
+
+    console.log(newRecord);
+    updateHistory.on(
+      "value",
+      patient => {
+        const oldrecords = patient.val().medicalHistory
+          ? patient.val().medicalHistory
+          : [];
+        oldrecords.push(newRecord);
+
+        a.update(oldrecords);
+        res.status(200).json({ message: "Record added", oldrecords });
+      },
+      error => {
+        res.status(error.code).json({
+          message: `Something went wrong. ${error.message}`
+        });
+      }
+    );
+  });
+
+  // return cors(req, res, () => {
+  //   if (req.method !== "POST") {
+  //     return res.status(401).json({
+  //       message: "Not allowed"
+  //     });
+  //   }
+  //   try {
+  //     const patientId = req.query.id;
+  //     console.log("patientId", patientId);
+  //     const historyRoute = patientDB.child(`/${patientId}/medicalHistory`);
+
+  //     let { disease, medications, description, date } = req.body;
+  //     let newRecord = { disease, medications, description, date };
+  //     // const patientRoute = admin.database().ref(`/patients/${patientId}`);
+  //     // console.log(temp);
+  //     // patientRoute.on("value", patient => {
+  //     //   let oldRecords = patient.val().medicalHistory;
+  //     //   console.log(oldRecords);
+  //     //   let records = oldRecords.push(newRecord);
+  //     //   console.log(records);
+  //     // });
+
+  //     patientDB.child(`/${patientId}`).on("value", patient => {
+  //       console.log(patient.val().medicalHistory);
+  //       let oldRecords = patient.val().medicalHistory;
+  //       let records = oldRecords.push(newRecord);
+  //       console.log(records);
+
+  //       historyRoute.update(records);
+  //     });
+  //     res.status(200).json({
+  //       message: "Patient added successfully"
+  //       // patient
+  //     });
+  //   } catch (error) {
+  //     res.status(error.code).json({
+  //       message: `Something went wrong. ${error.message}`
+  //     });
+  //   }
+  // });
+});
+
 exports.signUp = functions.https.onRequest((req, res) => {
   return cors(req, res, () => {
     if (req.method !== "POST") {
