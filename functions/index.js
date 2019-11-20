@@ -9,6 +9,95 @@ const patientDB = admin.database().ref("/patients");
 // // https://firebase.google.com/docs/functions/write-firebase-functions
 //
 
+exports.addPatient = functions.https.onRequest((req, res) => {
+  return cors(req, res, () => {
+    if (req.method !== "POST") {
+      return res.status(401).json({
+        message: "Not allowed"
+      });
+    }
+    let {
+      patientName,
+      age,
+      disease,
+      medications,
+      description,
+      date,
+      doctorId
+    } = req.body;
+    if (
+      !patientName ||
+      !age ||
+      !disease ||
+      !medications ||
+      !description ||
+      !date ||
+      !doctorId
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Please fill all fields"
+      });
+    }
+    try {
+      const patient = {
+        patientName,
+        age,
+        medicalHistory: [{ disease, medications, description, date }],
+        doctorId
+      };
+      // let patientExists = false;
+      // patientDB.once("value", snapshot => {
+      //   snapshot.forEach(snap => {
+      //     if (snap.val().patientName === patientName) {
+      //       console.log("data", snap.val().patientName);
+      //       patientExists = true;
+      //     }
+      //     return patientExists;
+      //   });
+      // });
+      // console.log("patient exists?", patientExists);
+
+      // if (patientExists) {
+      //   return res.status(400).json({
+      //     success: false,
+      //     message: "Patient already exists!"
+      //   });
+      // }
+
+      //   console.log("patient:", patient);
+      patientDB.push(patient);
+      res.status(200).json({
+        message: "Patient added successfully",
+        patient
+      });
+    } catch (err) {
+      res.status(error.code).json({
+        message: `Something went wrong. ${error.message}`
+      });
+    }
+
+    // let items = [];
+    // return database.on(
+    //   "value",
+    //   snapshot => {
+    //     snapshot.forEach(item => {
+    //       items.push({
+    //         id: item.key,
+    //         items: item.val().item
+    //       });
+    //     });
+    //     res.status(200).json(items);
+    //   },
+    //   error => {
+    //     res.status(error.code).json({
+    //       message: `Something went wrong. ${error.message}`
+    //     });
+    //   }
+    // );
+  });
+});
+
 exports.signUp = functions.https.onRequest((req, res) => {
   return cors(req, res, () => {
     if (req.method !== "POST") {
