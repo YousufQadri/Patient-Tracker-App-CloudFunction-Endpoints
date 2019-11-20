@@ -138,6 +138,60 @@ exports.getPatients = functions.https.onRequest((req, res) => {
   });
 });
 
+exports.getPatientDetails = functions.https.onRequest((req, res) => {
+  return cors(req, res, () => {
+    if (req.method !== "GET") {
+      return res.status(401).json({
+        message: "Not allowed"
+      });
+    }
+    const patientId = req.query.id;
+    console.log("patientId", patientId);
+
+    let patient = {};
+
+    patientDB.once(
+      "value",
+      snapshot => {
+        snapshot.forEach(snap => {
+          if (snap.key === patientId) {
+            patient = snap.val();
+          }
+          console.log("key", snap.key);
+        });
+        console.log("patient:", patient);
+        res.status(200).json(patient);
+      },
+      error => {
+        res.status(error.code).json({
+          message: `Something went wrong. ${error.message}`
+        });
+      }
+    );
+
+    // return patientDB.once(
+    //   "value",
+    //   snapshot => {
+    //     // snapshot.forEach(patient => {
+    //     //   patients.push(patient.val());
+    //     // });
+    //     console.log(snapshot.val());
+
+    //     res.status(200).json({ message: "working" });
+    //   },
+    //   error => {
+    //     res.status(error.code).json({
+    //       message: `Something went wrong. ${error.message}`
+    //     });
+    //   }
+    // );
+    //   once("value", snapshot => {
+    //     console.log("details:", snapshot.val());
+    //   });
+    // getItemsFromDatabase(res)
+  });
+});
+
 exports.signUp = functions.https.onRequest((req, res) => {
   return cors(req, res, () => {
     if (req.method !== "POST") {
